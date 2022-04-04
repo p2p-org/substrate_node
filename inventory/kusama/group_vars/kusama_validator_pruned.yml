@@ -1,0 +1,18 @@
+---
+disable_unattended_upgrades: yes
+
+node_safe_restart: true
+
+node_relaychain_args:
+- '--validator'
+- '--unsafe-pruning'
+- '--pruning=1000'
+- '--prometheus-external'
+- '--prometheus-port 9615'
+
+dynamic_reserved_nodes:
+- 1.1.1.1
+- 2.2.2.2
+- 3.3.3.3
+
+relay_db_snapshot_url: https://ksm-rocksdb.polkashots.io/snapshot

@@ -1,0 +1,17 @@
+---
+node_parachain_args:
+- '--collator'
+- '--pruning=archive'
+- '--execution=wasm'
+- '--wasm-execution=compiled'
+- '--state-cache-size=1'
+- '--prometheus-external'
+- '--prometheus-port 9616'
+- '--db-cache 4000'
+
+node_relaychain_args:
+- '--pruning 1000'
+- '--unsafe-pruning'
+- '--prometheus-external'
+- '--prometheus-port 9615'
+- '--wasm-execution=compiled'

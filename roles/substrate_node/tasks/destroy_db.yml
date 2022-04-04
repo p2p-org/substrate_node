@@ -1,0 +1,17 @@
+---
+- name: Stopping node
+  systemd:
+    state: stopped
+    enabled: no
+    name: "{{ node_binary_name}}-node"
+
+- name: Delete DB(relay)
+  file:
+    path: "{{ node_home_dir }}/{{ relaychain_db_path }}/db"
+    state: absent
+
+- name: Delete DB(para)
+  file:
+    path: "{{ node_home_dir }}/{{ parachain_db_path }}/db"
+    state: absent
+  ignore_errors: yes

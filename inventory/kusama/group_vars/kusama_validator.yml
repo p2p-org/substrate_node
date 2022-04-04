@@ -1,0 +1,10 @@
+---
+disable_unattended_upgrades: yes
+
+node_safe_restart: true
+
+node_relaychain_args:
+- '--validator'
+- '--pruning=archive'
+- '--prometheus-external'
+- '--prometheus-port 9615'

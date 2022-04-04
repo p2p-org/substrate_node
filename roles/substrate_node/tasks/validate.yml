@@ -1,0 +1,44 @@
+---
+- name: Check if variable is specified
+  fail:
+    msg: "Path where secrets store should be defined with using tag `sign`. -e path=/path/to/secrets"
+  failed_when: path is not defined
+  when: "'validate' in ansible_run_tags"
+
+- name: TX staking.validate
+  command:
+    argv:
+    - "/usr/bin/node"
+    - "../scripts/substrate_tx/validate.js"
+    - "{{ relay_chain }}"
+    - "{{ public_node_ws_url }}"
+    - "{{ validators[inventory_hostname]['controller'] }}"
+    - "{{ validators[inventory_hostname]['commission'] }}"
+    - "{{ path }}"
+  when: validators[inventory_hostname]['controller'] is defined and validators[inventory_hostname]['commission']
+  register: sign_result
+  delegate_to: localhost
+  become: no
+
+- name: Set body for posting to slack
+  set_fact:
+    body: {"text":"{{ inventory_hostname }}(`{{ validators[inventory_hostname]['controller'] }}`):\n\nEnable validation with commission: {{ validators[inventory_hostname]['commission'] }}\n\nTX: {{ sign_result['stdout'] }}"}
+  when: sign_result['stdout'] is defined
+
+- name: Post to slack
+  uri:
+    url: "{{ node_slack_channel }}"
+    method: POST
+    body_format: json
+    return_content: yes
+    body: "{{ body }}"
+  when: body is defined
+  register: result
+  ignore_errors: yes
+  delegate_to: localhost
+  become: no
+
+- name: Print results
+  debug:
+    msg: "TX: {{ sign_result }}"
+  when: sign_result is defined

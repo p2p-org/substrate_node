@@ -1,0 +1,37 @@
+---
+- name: Getting last finalized block from node
+  uri:
+    url: "http://localhost:{{ node_rpc_port }}/"
+    method: POST
+    body_format: json
+    return_content: yes
+    body: {"id":1, "jsonrpc":"2.0", "method": "system_syncState"}
+  register: block_num
+  run_once: yes
+  until: block_num.status == 200
+  retries: 10
+  delay: 6
+
+- name: Getting block hash from node
+  uri:
+    url: "http://localhost:9933"
+    method: POST
+    body_format: json
+    return_content: yes
+    body: {"id":1, "jsonrpc":"2.0", "method": "chain_getBlockHash", "params": "[ {{block_num.json['result']['currentBlock']}} ]"}
+  register: hash_l
+  run_once: yes
+
+- name: Getting block hash from public node
+  local_action:
+    module: uri
+    url: "{{ public_node_rpc_url }}"
+    method: POST
+    body_format: json
+    return_content: yes
+    body: {"id":1, "jsonrpc":"2.0", "method": "chain_getBlockHash", "params": "[{{ block_num.json['result']['currentBlock'] }}]"}
+  register: hash_r
+  run_once: yes
+
+- debug:
+    msg: "PLEASE PAY ATTENTION AND CHECK. Block {{ block_num.json['result']['currentBlock'] }}. hash from node: {{ hash_l.json['result'] }} hash from public node {{ hash_r.json['result'] }}"

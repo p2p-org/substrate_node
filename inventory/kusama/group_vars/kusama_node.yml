@@ -1,0 +1,13 @@
+---
+node_safe_restart: ''
+
+node_relaychain_args:
+- '--pruning=archive'
+- '--prometheus-external'
+- '--prometheus-port 9615'
+- '--in-peers=170'
+- "--unsafe-rpc-external"
+- "--rpc-cors all"
+- "--unsafe-ws-external"
+- "--ws-max-out-buffer-capacity 50"
+- "--ws-max-connections 100"

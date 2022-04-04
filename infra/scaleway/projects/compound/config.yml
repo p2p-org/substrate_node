@@ -1,0 +1,27 @@
+prefix: scaleway
+project: compound
+
+instances:
+  compound_validator:
+    instance_type: DEV1-L
+    boot_disk_image: ubuntu_focal
+    boot_disk_size: 80
+    extended_disk_type: b_ssd
+    extended_disk_size: 100
+    extended_disk_name: sda
+    machines:
+      compound-validator-1:
+        region: fr-par
+        zone: fr-par-1
+
+  compound_node:
+    instance_type: DEV1-L
+    boot_disk_image: ubuntu_focal
+    boot_disk_size: 80
+    extended_disk_type: b_ssd
+    extended_disk_size: 100
+    extended_disk_name: sda
+    machines:
+      compound-node-1:
+        region: fr-par
+        zone: fr-par-1

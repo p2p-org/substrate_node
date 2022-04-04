@@ -1,0 +1,20 @@
+---
+node_parachain_args:
+- '--pruning=archive'
+- "--unsafe-rpc-external"
+- "--rpc-cors all"
+- "--unsafe-ws-external"
+- "--ws-port 9945"
+- "--rpc-port 9934"
+- '--execution=wasm'
+- '--wasm-execution=compiled'
+- '--prometheus-external'
+- '--prometheus-port 9616'
+- '--db-cache 4000'
+- '--state-cache-size 0'
+
+node_relaychain_args:
+- '--prometheus-external'
+- '--prometheus-port 9615'
+- '--rpc-port 9933'
+- '--ws-port 9944'

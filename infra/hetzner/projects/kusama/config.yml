@@ -1,0 +1,29 @@
+prefix: hznr
+project: kusama
+
+instances:
+  kusama_node:
+    instance_type: cx51
+    boot_disk_image: ubuntu-20.04
+    boot_disk_size: 160
+    extended_disk_size: 1000
+    extended_disk_name: sdb
+    machines:
+      kusama-node1:
+        zone: hel1-dc2
+        region: hel1
+
+  kusama_validator_pruned:
+    instance_type: cpx51
+    boot_disk_image: ubuntu-20.04
+    boot_disk_size: 160
+    extended_disk_size: 220
+    extended_disk_name: sdb
+    machines:
+      kusama-validator1:
+        zone: fsn1-dc14
+        region: fsn1
+      kusama-validator2:
+        instance_type: ccx32
+        zone: hel1-dc2
+        region: hel1

@@ -1,0 +1,14 @@
+---
+- name: Set session key
+  uri:
+    url: "http://localhost:{{ node_rpc_port }}/"
+    method: POST
+    body_format: json
+    return_content: yes
+    body: {"id":"1","jsonrpc":"2.0","method":"author_rotateKeys","params":[]}
+  changed_when: true
+  register: session_key
+
+- name: Print results
+  debug:
+    msg: "{{ session_key }}"

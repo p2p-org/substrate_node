@@ -1,0 +1,42 @@
+---
+- name: Checking if node has actual state
+  subrpc:
+    action: check_sync
+    rpc_url: "{{ public_node_rpc_url }}"
+  delegate_to: localhost
+  register: result_sync
+  become: no
+  run_once: true
+
+- debug:
+    msg: "Sync state: {{ result_sync.result }}"
+
+- name: Stopping node(safe)
+  systemd:
+    enabled: no
+    state: stopped
+    name: "{{ node_binary_name}}-node"
+  when: result_sync.result['status'] == "success"
+
+- name: Calculating finalization
+  subrpc:
+    action: check_finality
+    rpc_url: "{{ public_node_rpc_url }}"
+    retries: 3
+    delay: 10
+  delegate_to: localhost
+  register: result_finality
+  become: no
+  run_once: true
+
+- debug:
+    msg: "Result: {{ result_finality.result }}"
+
+- name: Starting node(safe)
+  systemd:
+    enabled: no
+    state: started
+    daemon_reload: yes
+    name: "{{ node_binary_name }}-node"
+  when: result_finality.result['status'] == "success"
+  notify: dynamic-reserved-nodes

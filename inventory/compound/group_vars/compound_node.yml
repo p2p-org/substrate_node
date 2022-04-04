@@ -1,0 +1,8 @@
+---
+node_relaychain_args:
+- '--pruning=archive'
+- '--prometheus-external'
+- '--prometheus-port 9615'
+- "--unsafe-rpc-external"
+- "--rpc-cors all"
+- "--unsafe-ws-external"

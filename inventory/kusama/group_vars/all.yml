@@ -1,0 +1,17 @@
+---
+relay_chain: kusama
+node_binary_name: polkadot
+
+validator_public_port: 30333
+
+node_home_dir: /home/polkadot
+node_log_dir: /var/log/polkadot
+
+node_binary_url: https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot
+relaychain_db_path: .local/share/polkadot/chains/ksmcc3
+
+node_user: polkadot
+node_group: polkadot
+
+public_node_rpc_url: http://kusama_node:9933/
+public_node_ws_url: ws://kusama_node:9944/

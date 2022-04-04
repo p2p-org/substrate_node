@@ -1,0 +1,53 @@
+## you can find out more about params mapping by checking ./locals.tf
+prefix: gcp
+project: kusama
+
+instances:
+  kusama_node:
+    instance_type: n2-standard-4
+    boot_disk_image: ubuntu-os-cloud/ubuntu-2004-lts
+    boot_disk_size: 20
+    extended_disk_type: pd-ssd
+    extended_disk_size: 1000
+    extended_disk_name: sdb
+    machines:
+      kusama-node1:
+        region: europe-west3
+        zone: europe-west3-a
+
+  kusama_validator:
+    instance_type: n2-standard-8
+    boot_disk_image: ubuntu-os-cloud/ubuntu-2004-lts
+    boot_disk_size: 20
+    extended_disk_type: pd-ssd
+    extended_disk_size: 1000
+    extended_disk_name: sdb
+    machines:
+      kusama-validator1:
+        region: europe-west2
+        zone: europe-west2-a
+      kusama-validator2:
+        region: europe-west2
+        zone: europe-west2-a
+        vars_list:                                                               # Here we can override ansible group vars
+          node_relaychain_args:                                                  # Literrally make prunning node inside archive environment
+          - "'--validator'"                                                      #
+          - "'--unsafe-pruning'"                                                 #
+          - "'--pruning=1000'"                                                   #
+        vars:                                                                    #
+          relay_db_snapshot_url: https://ksm-rocksdb.polkashots.io/snapshot      #
+
+  kusama_validator_pruned:
+    instance_type: n2-standard-8
+    boot_disk_image: centos-cloud/centos-stream-9
+    boot_disk_size: 20
+    extended_disk_type: pd-ssd
+    extended_disk_size: 300
+    extended_disk_name: sdb
+    machines:
+      kusama-validator11:
+        region: us-east1
+        zone: us-east1-b
+      kusama-validator12:
+        region: us-east1
+        zone: us-east1-b

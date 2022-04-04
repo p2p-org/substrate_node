@@ -1,0 +1,13 @@
+ssh_users:
+  user1:
+    publickeys:
+    - "bublic key"
+    password: "sha512 encrypted string"
+  user2:
+    publickeys:
+     - "bublic key"
+    password: "sha512 encrypted string"
+  user3:
+    publickeys:
+    - "bublic key"
+    password: "sha512 encrypted string"

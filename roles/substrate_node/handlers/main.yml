@@ -1,0 +1,31 @@
+---
+- name: Enable and start/restart node(Unsafe)
+  systemd:
+    daemon_reload: yes
+    enabled: no
+    state: restarted
+    name: "{{ node_binary_name }}-node"
+  when: node_safe_restart == '' and 'skip-node-start' not in ansible_run_tags
+  listen: restart-node
+
+- include_tasks: verify_db.yml
+  when: public_node_rpc_url is defined
+  listen: verify-db
+
+- include_tasks: safe_restart.yml
+  when: node_safe_restart is defined and node_safe_restart != '' and 'skip-node-start' not in ansible_run_tags
+  listen: restart-node
+
+- include_tasks: dynamic_reserved_nodes.yml
+  when: dynamic_reserved_nodes is defined and dynamic_reserved_nodes != ''
+  loop: "{{ dynamic_reserved_nodes }}"
+  listen: dynamic-reserved-nodes
+  ignore_errors: yes
+
+- name: Stop node
+  systemd:
+    daemon_reload: no
+    enabled: no
+    state: stopped
+    name: "{{ node_binary_name }}-node"
+  listen: stop-node

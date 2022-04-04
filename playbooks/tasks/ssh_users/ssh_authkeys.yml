@@ -1,0 +1,21 @@
+---
+- name: Add keys
+  authorized_key:
+    path: "/home/{{ item.key }}/.ssh/authorized_keys.tmp"
+    user: "{{ item.key }}"
+    state: present
+    key: "{{ item.value.publickeys | join('\n') }}"
+
+- name: "Copy /home/{{ item.key }}/.ssh/authorized_keys.tmp"
+  copy:
+    src: "/home/{{ item.key }}/.ssh/authorized_keys.tmp"
+    dest: "/home/{{ item.key }}/.ssh/authorized_keys"
+    owner: "{{ item.key }}"
+    group: "{{ item.key }}"
+    mode: '0600'
+    remote_src: yes
+
+- name: Remove tmp file
+  file:
+    path: "/home/{{ item.key }}/.ssh/authorized_keys.tmp"
+    state: absent

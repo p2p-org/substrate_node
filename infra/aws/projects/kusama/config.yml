@@ -1,0 +1,40 @@
+## you can find out more about params mapping by checking ./locals.tf
+prefix: aws
+project: polkadot
+
+instances:
+  kusama_node:
+    instance_type: m5a.large
+    boot_disk_size: 8
+    boot_disk_image: ami-0d527b8c289b4af7f
+    extended_disk_size: 500
+    extended_disk_name: nvme1n1
+    ebs_encrypted: false
+    machines:
+      kusama-node1:
+        zone: eu-central-1a
+
+  kusama_validator_pruned:
+    instance_type: m5.xlarge
+    boot_disk_size: 20
+    boot_disk_image: ami-0d527b8c289b4af7f
+    extended_disk_size: 150
+    extended_disk_name: nvme1n1
+    machines:
+      kusama-validator1:
+        zone: eu-central-1a
+      kusama-validator2:
+        instance_type: m5.large  ## here we can se an example how some parameters could be overridden.
+        zone: eu-central-1a
+
+  kusama_validator:
+    instance_type: m5.xlarge
+    boot_disk_size: 20
+    boot_disk_image: ami-0d527b8c289b4af7f
+    extended_disk_size: 150
+    extended_disk_name: nvme1n1
+    machines:
+      kusama-validator11:
+        zone: eu-central-1a
+      kusama-validator12:
+        zone: eu-central-1a

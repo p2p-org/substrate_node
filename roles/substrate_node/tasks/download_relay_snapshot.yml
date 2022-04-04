@@ -1,0 +1,51 @@
+---
+- name: Create {{ relaychain_db_path }}
+  file:
+    path: "{{ node_home_dir }}/{{ relaychain_db_path }}"
+    state: directory
+
+- name: Find tmp file
+  find:
+    paths: "{{ node_home_dir }}"
+    patterns: "tmp*"
+  register: find_results
+
+- name: Remove tmp files  
+  file:
+    path: "{{ item['path'] }}"
+    state: absent
+  with_items: "{{ find_results['files'] }}"
+
+- name: Download relaychain DB
+  command: "curl {{ relay_db_snapshot_url }} -o {{ node_home_dir }}/{{ relay_db_snapshot_url | basename }} -s"
+  async: 1800
+  poll: 30
+  when: "'skip-download' not in ansible_run_tags"
+
+- name: Decompress archive(7zip from polkashots)
+  command: "7z x -y {{ node_home_dir }}/{{ relay_db_snapshot_url | basename }} -o{{ node_home_dir }}/{{ relaychain_db_path }}"
+  when: relay_db_snapshot_url | basename | splitext | last == '' 
+  async: 1800
+  poll: 30
+  notify: verify-db
+
+- name: Decompress archive(tar from our own bucket)
+  command: "tar xf {{ node_home_dir }}/{{ relay_db_snapshot_url | basename }} -C {{ node_home_dir }}/{{ relaychain_db_path }}"
+  when: relay_db_snapshot_url | basename | splitext | last == '.tar'
+  async: 1800
+  poll: 30
+  notify: verify-db
+
+- name: "Set permissons to {{ node_home_dir }}"
+  file:
+    path: "{{ node_home_dir }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0750'
+    recurse: yes
+
+- name: Remove an archive 
+  file:
+    path: "{{ node_home_dir }}/{{ relay_db_snapshot_url | basename }}"
+    state: absent
+  ignore_errors: yes

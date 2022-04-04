@@ -1,0 +1,11 @@
+- hosts: 'all'
+  become: true
+  become_method: sudo
+  serial: "{{ serial|default(20) }}"
+  gather_facts: no
+  vars_files:
+  - "{{ inventory_dir }}/vars/validators.yml"
+  
+
+  roles:
+  - role: substrate_node

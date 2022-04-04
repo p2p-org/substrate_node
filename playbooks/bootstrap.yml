@@ -1,0 +1,185 @@
+---
+- import_playbook: ssh_users.yml
+  vars:
+    ansible_user: "{{ default_user }}"
+  tags: add-users
+
+- name: Bootstrap playbook
+  hosts: all
+  gather_facts: yes
+  become: true
+  become_method: sudo
+  serial: "{{ serial|default(20) }}"
+  vars:
+    default_users_to_delete:
+    - ubuntu
+    - deploy
+
+  tasks:
+  - include_vars: "{{ inventory_dir }}/vars/ssh_users.yml"
+    ignore_errors: yes
+
+  - name: Generate known hosts file
+    block:
+    - name: For each host, scan for its ssh public key
+      shell: "ssh-keyscan -T 10 -t ecdsa {{ item }}"
+      with_items: "{{ ansible_host }}"
+      until: ssh_known_host_results.stdout != ''
+      retries: 1
+      register: ssh_known_host_results
+ 
+    - name: Remove the public key in the '{{ ssh_known_hosts_file }}'
+      known_hosts:
+        name: "{{ item.item }}"
+        state: "absent"
+        path: "{{ lookup('env','HOME') + '/.ssh/known_hosts' }}"
+      with_items: "{{ ssh_known_host_results.results }}"
+ 
+    - name: Add/update the public key in the '{{ ssh_known_hosts_file }}'
+      known_hosts:
+        name: "{{ item.item }}"
+        key: "{{ item.stdout }}"
+        state: "present"
+        path: "{{ lookup('env','HOME') + '/.ssh/known_hosts' }}"
+      with_items: "{{ ssh_known_host_results.results }}"
+    ignore_errors: yes
+    delegate_to: localhost
+    become: false
+    tags: known-hosts
+
+  - name: Set a hostname
+    hostname:
+      name: "{{ inventory_hostname }}"
+      use: systemd
+    tags: set-hostname
+
+  - name: Set timezone
+    block:
+    - name: Set UTC tz
+      timezone:
+        name: UTC
+
+    - name: Restart rsyslog
+      systemd:
+        name: rsyslog
+        state: restarted
+    tags: set-timezone
+
+  - name: Unattended upgrades
+    block:
+    - name: Check if /etc/apt/apt.conf.d/20auto-upgrades exists
+      stat:
+        path: /etc/apt/apt.conf.d/20auto-upgrades
+      register: r
+
+    - name: Create /etc/apt/apt.conf.d/20auto-upgrades
+      copy:
+        dest: "/etc/apt/apt.conf.d/20auto-upgrades"
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+      when: not r.stat.exists
+
+    - name: Disable unattended-upgrades
+      lineinfile:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        state: present
+        regexp: '^APT::Periodic::Unattended-Upgrade "1";'
+        line: 'APT::Periodic::Unattended-Upgrade "0";'
+      when: disable_unattended_upgrades is defined
+    tags: unattended-upgrades
+
+  - name: Upgrade DEB like OS
+    block:
+    - name: Update apt-get repo and cache
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all apt packages
+      apt:
+        upgrade: dist
+        force_apt_get: yes
+
+    - name: Check if a reboot is needed for Debian and Ubuntu boxes
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+
+    - name: Reboot the Debian or Ubuntu server
+      reboot:
+        msg: "Reboot initiated by Ansible due to kernel updates"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 45
+        test_command: uptime
+      when: reboot_required_file.stat.exists
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
+    ignore_errors: yes
+    tags: upgrade-os
+
+  - name: Install some necessary packages
+    apt:
+      pkg:
+      - "vim"
+      - "net-tools"
+      - "iputils-ping"
+      - "p7zip-full"
+      state: present
+      update_cache: yes
+    tags: install-packages
+
+  - name: Mount an additional disk
+    block:
+    - name: "Create a ext4 filesystem on {{ extended_disk_name }}"
+      filesystem:
+        fstype: ext4
+        dev: "/dev/{{ extended_disk_name }}"
+
+    - name: "Mount an additional volume(trying with {{ extended_disk_name }})"
+      mount:
+        path: "{{ node_home_dir }}"
+        src: "/dev/{{ extended_disk_name }}"
+        opts: rw,relatime
+        state: mounted
+        fstype: ext4
+      register: result
+      ignore_errors: yes
+    when: extended_disk_name is defined
+    tags: mount-point
+
+  - name: Clean up default accesses
+    block:
+    - name: Delete default users
+      user:
+        name: "{{ item }}"
+        state: absent
+        force: yes
+        remove: yes
+      ignore_errors: yes
+      with_items: "{{ users_to_delete | default(default_users_to_delete)}}"
+
+    - name: "Delete homedir {{ item }}"
+      file:
+        path: "/home/{{ item }}"
+        state: absent
+      ignore_errors: yes
+      with_items: "{{ users_to_delete | default(default_users_to_delete)}}"
+
+    - name: Delete /root/.ssh directory
+      file:
+        path: /root/.ssh/
+        state: absent
+
+    - name: Disable default sudo permissions
+      lineinfile:
+        path: /etc/sudoers
+        regexp: '^%sudo'
+        state: absent
+        validate: '/usr/sbin/visudo -cf %s'
+    tags: cleanup-default-users

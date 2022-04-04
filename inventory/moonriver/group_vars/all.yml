@@ -1,0 +1,20 @@
+---
+relay_chain: kusama
+para_chain: moonriver
+
+node_binary_name: moonbeam
+node_safe_restart: ''
+
+node_user: moonbeam
+node_group: moonbeam
+
+node_home_dir: /home/moonbeam
+node_log_dir: /var/log/moonbeam
+
+relay_db_snapshot_url: https://ksm-rocksdb.polkashots.io/snapshot
+relaychain_db_path: .local/share/moonbeam/polkadot/chains/ksmcc3
+parachain_db_path: .local/share/moonbeam/chains/moonriver
+node_binary_url: https://github.com/PureStake/moonbeam/releases/download/v0.21.1/moonbeam
+
+node_rpc_port: 9933
+node_ws_port: 9944

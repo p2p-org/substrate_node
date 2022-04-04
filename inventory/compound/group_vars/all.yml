@@ -1,0 +1,25 @@
+---
+relay_chain: /home/compound/chain-spec-raw.json
+relaychain_specs:
+- https://raw.githubusercontent.com/compound-finance/gateway/master/chains/stablenet/chain-spec.json
+- https://raw.githubusercontent.com/compound-finance/gateway/master/chains/stablenet/chain-spec-raw.json
+
+node_binary_url: https://github.com/compound-finance/gateway/releases/download/m16/gateway-linux-x86
+relaychain_db_path: .local/share/gateway/chains/local_testnet
+
+node_binary_name: gateway
+
+node_user: compound
+node_group: compound
+
+node_home_dir: /home/compound
+node_log_dir: /var/log/compound
+
+node_rpc_port: 9933
+node_ws_port: 9944
+
+node_safe_restart: ''
+reserved_nodes: ''
+
+bootnodes:
+- /dns/brr-sally.compound.cash/tcp/30333/p2p/12D3KooWMBqjJosQ8RowwcQ9EoKg7QkcM76piZqhj2skXtU3ZgGm

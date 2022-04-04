@@ -1,0 +1,17 @@
+---
+- name: "Delete group {{ item }}"
+  group:
+    name: "{{ item }}"
+    state: absent
+  ignore_errors: yes
+
+- name: "Delete user {{ item }}"
+  user:
+    name: "{{ item }}"
+    state: absent
+  ignore_errors: yes
+
+- name: "Delete homedir {{ item }}"
+  file:
+    path: "/home/{{ item }}"
+    state: absent

@@ -1,0 +1,37 @@
+- name: "Stoping {{ node_binary_name}}-node"
+  systemd:
+    enabled: no
+    state: stopped
+    name: "{{ node_binary_name }}-node"
+  notify: restart-node
+
+- name: backup keystore
+  copy:
+    src: "{{ node_home_dir }}/{{ relaychain_db_path }}/keystore"
+    dest: /tmp/
+    remote_src: yes
+  ignore_errors: yes
+
+- name: "Compress directory {{ node_home_dir }}/{{ relaychain_db_path }}/keystore"
+  archive:
+    path: /tmp/keystore
+    dest: /tmp/skeys.zip
+    remove: yes
+    format: zip
+
+- name: Delete previous version
+  file:
+    path: "{{ path }}/{{ inventory_hostname }}.zip"
+    state: absent
+  delegate_to: localhost
+
+- name: Fetch keystore
+  fetch:
+    src: /tmp/skeys.zip
+    dest: "{{ path }}/{{ inventory_hostname }}.zip"
+    flat: yes
+
+- name: Delete archive
+  file:
+    path: /tmp/skeys.zip
+    state: absent

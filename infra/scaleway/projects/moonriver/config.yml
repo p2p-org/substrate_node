@@ -1,0 +1,30 @@
+prefix: scaleway
+project: moonriver
+
+instances:
+  moonriver_node:
+    instance_type: DEV1-XL
+    boot_disk_image: ubuntu_focal
+    boot_disk_size: 120
+    extended_disk_size: 450
+    extended_disk_type: b_ssd
+    extended_disk_name: sda
+    machines:
+      moonriver-node1:
+        region: pl-waw
+        zone: pl-waw-1
+
+  moonriver_collator:
+    instance_type: GP1-S
+    boot_disk_image: ubuntu_focal
+    boot_disk_size: 300
+    extended_disk_size: 450
+    extended_disk_type: b_ssd
+    extended_disk_name: sda
+    machines:
+      moonriver-collator1:
+        region: fr-par
+        zone: fr-par-1
+        vars:
+          telemetry_name: '"Custom name in telemetry"'
+

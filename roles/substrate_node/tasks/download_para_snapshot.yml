@@ -1,0 +1,36 @@
+---
+- name: Create {{ parachain_db_path }}
+  file:
+    path: "{{ node_home_dir }}/{{ parachain_db_path }}"
+    state: directory
+
+- name: Download parachain DB
+  command: "curl {{ para_db_snapshot_url }} -o {{ node_home_dir }}/{{ para_db_snapshot_url | basename }} -s"
+  async: 1800
+  poll: 30
+
+- name: Decompress archive(7zip from polkashots)
+  command: "7z x -y {{ node_home_dir }}/{{ para_db_snapshot_url | basename }} -o{{ node_home_dir }}/{{ parachain_db_path }}"
+  when: para_db_snapshot_url | basename | splitext | last == '' 
+  async: 1800
+  poll: 30
+
+- name: Decompress archive(tar from our own bucket)
+  command: "tar xf {{ node_home_dir }}/{{ para_db_snapshot_url | basename }} -C {{ node_home_dir }}/{{ parachain_db_path }}"
+  when: para_db_snapshot_url | basename | splitext | last == '.tar'
+  async: 1800
+  poll: 30
+
+- name: "Set permissons to {{ node_home_dir }}"
+  file:
+    path: "{{ node_home_dir }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0750'
+    recurse: yes
+
+- name: Remove an archive 
+  file:
+    path: "{{ node_home_dir }}/{{ para_db_snapshot_url | basename }}"
+    state: absent
+  ignore_errors: yes

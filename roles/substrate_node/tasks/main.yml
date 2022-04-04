@@ -1,0 +1,131 @@
+---
+- name: Define blank variable(node_safe_restart)
+  set_fact:
+    node_safe_restart: ""
+  when: "'install' in ansible_run_tags"
+  tags: install
+
+- import_tasks: preflight.yml
+  tags:
+  - install
+  - preflight
+  when: "'install' in ansible_run_tags or 'preflight' in ansible_run_tags"
+
+- import_tasks: delete_keys.yml
+  tags:
+  - delete-keys
+  - install
+  when: ('delete-keys' in ansible_run_tags) or
+        ('install' in ansible_run_tags and 'skip-delete-keys' not in ansible_run_tags)
+
+- import_tasks: download_relay_snapshot.yml
+  tags:
+  - install
+  - from-snapshot
+  when: "'install' in ansible_run_tags and 'from-snapshot' in ansible_run_tags and relay_db_snapshot_url is defined"
+
+- import_tasks: download_para_snapshot.yml
+  tags:
+  - install
+  - from-para-snapshot
+  when: "'install' in ansible_run_tags and 'from-para-snapshot' in ansible_run_tags and para_db_snapshot_url is defined"
+
+- import_tasks: install_node.yml
+  tags:
+  - install
+  - upgrade
+  when: ('install' in ansible_run_tags or 'upgrade' in ansible_run_tags) 
+
+- import_tasks: rotate_keys.yml
+  tags: rotate-keys
+  when: "'rotate-keys' in ansible_run_tags"
+
+- import_tasks: revert.yml
+  tags: revert
+  when: "'revert' in ansible_run_tags"
+
+- import_tasks: destroy_db.yml
+  tags: destroy-db
+  when: "'destroy-db' in ansible_run_tags"
+
+- import_tasks: backup_keys.yml
+  tags: backup-keys
+  when: "'backup-keys' in ansible_run_tags"
+
+- import_tasks: restore_keys.yml
+  tags: restore-keys
+  when: "'restore-keys' in ansible_run_tags"
+
+- import_tasks: list_keystore.yml
+  tags: list-keys
+  when: "'list-keys' in ansible_run_tags"
+
+- name: Define public addr
+  set_fact:
+     #node_public_addr: "/ip4/{{ server_endpoint }}/tcp/{{ validator_public_port }}"
+     node_public_addr: "/ip4/{{ ansible_host }}/tcp/{{ validator_public_port }}"
+  when: validator_public_port is defined
+  tags:
+  - install
+  - upgrade
+  - revert
+
+- name: Download relay chain spec files
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ node_home_dir }}/{{ item | basename }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+  with_items: "{{ relaychain_specs }}"
+  when: relaychain_specs is defined
+  tags:
+  - install
+  - revert
+
+- name: Download para chain spec files
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ node_home_dir }}/{{ item | basename }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+  with_items: "{{ parachain_specs }}"
+  when: parachain_specs is defined
+  tags:
+  - install
+  - revert
+
+- name: Create {{ node_binary_name }} service file
+  template:
+    src: node.service.j2
+    dest: "/lib/systemd/system/{{ node_binary_name }}-node.service"
+    owner: root
+    group: root
+    mode: 0600
+  notify: restart-node
+  when: "'skip-config' not in ansible_run_tags"
+  tags:
+  - install
+  - upgrade
+  - revert
+
+- name: Restart node
+  debug:
+    msg: "Restart node"
+  changed_when: true
+  notify: restart-node
+  tags: restart
+  when: "'restart' in ansible_run_tags"
+
+- name: Stop node
+  debug:
+    msg: "Stop node"
+  changed_when: true
+  notify: stop-node
+  tags: stop
+  when: "'stop' in ansible_run_tags"
+
+- name: Define reserved nodes
+  debug:
+    msg: "Define reserved nodes"
+  changed_when: true
+  notify: dynamic-reserved-nodes

@@ -1,0 +1,32 @@
+- name: Install unzip
+  apt:
+    pkg:
+    - "unzip"
+
+- name: "Stoping {{ node_binary_name}}-node"
+  systemd:
+    enabled: no
+    state: stopped
+    name: "{{ node_binary_name}}-node"
+
+- name: Delete 'keystore' and 'network' folders
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+  - "{{ node_home_dir }}/{{ relaychain_db_path }}/keystore"
+  - "{{ node_home_dir }}/{{ relaychain_db_path }}/network"
+  ignore_errors: yes
+
+- name: Unarchive a file that is already on the remote machine
+  unarchive:
+    src: "{{ path }}/{{ name }}.zip"
+    dest: "{{ node_home_dir }}/{{ relaychain_db_path }}"
+
+- name: "Set permissons to {{ node_home_dir }}/{{ relaychain_db_path }}/keystore"
+  file:
+    path: "{{ node_home_dir }}/{{ relaychain_db_path }}/keystore"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0750'
+    recurse: yes

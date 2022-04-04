@@ -1,0 +1,48 @@
+---
+- name: SSH users management
+  hosts: all
+  gather_facts: no
+  become: true
+  become_method: sudo
+  serial: "{{ serial|default(20) }}"
+
+  tasks:
+  - include_vars: "{{ inventory_dir }}/vars/ssh_users.yml"
+    ignore_errors: yes
+    when: ssh_users is not defined
+    tags:
+    - add-users
+    - auth-keys
+
+  - name: Add users
+    include_tasks: 
+      file: tasks/ssh_users/ssh_adduser.yml
+      apply:
+        tags: always
+    with_items: 
+    - "{{ lookup('dict', ssh_users, wantlist=True) }}"
+    tags: add-users
+    when: "'delete-users' not in ansible_run_tags"
+    ignore_errors: yes
+
+  - name: Delete users 
+    include_tasks: 
+      file: tasks/ssh_users/ssh_deleteuser.yml
+      apply:
+        tags: always
+    with_items: "{{ ssh_users.split(',') | list }}"
+    tags: delete-users
+    when: "'delete-users' in ansible_run_tags"
+  
+  - name: Manage with auth keys
+    include_tasks: 
+      file: tasks/ssh_users/ssh_authkeys.yml
+      apply:
+        tags: always
+    with_items: 
+    - "{{ lookup('dict', ssh_users, wantlist=True) }}"
+    tags:
+    - auth-keys
+    - add-users
+    when: "'delete-users' not in ansible_run_tags"
+    ignore_errors: yes

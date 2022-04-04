@@ -1,0 +1,40 @@
+---
+- name: Create group
+  group:
+    name: "{{ node_group }}"
+    state: present
+    system: true
+  ignore_errors: yes
+
+- name: Create user
+  user:
+    name: "{{ node_user }}"
+    group: "{{ node_group }}"
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: true
+    home: "{{ node_home_dir }}"
+  ignore_errors: yes
+
+- name: "Create log directory"
+  file:
+    path: "{{ node_log_dir }}"
+    state: directory
+    mode: 0640
+    owner: "{{ node_user }}"
+
+- name: Copy logrotate file
+  template:
+    src: node.logrotate.j2
+    dest: "/etc/logrotate.d/{{ node_binary_name }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: "Set permissons to {{ node_home_dir }}"
+  file:
+    path: "{{ node_home_dir }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0750'
+    recurse: yes

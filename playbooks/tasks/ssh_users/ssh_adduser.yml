@@ -1,0 +1,59 @@
+---
+- name: Create group
+  group:
+    name: "{{ item.key }}"
+    state: present
+    system: false
+
+- name: Password protected
+  block:
+  - name: "Create user {{ item.key }} with password"
+    user:
+      name: "{{ item.key }}"
+      group: "{{ item.key }}"
+      shell: /bin/sh
+      password: "{{ item.value.password }}"
+      system: false
+      create_home: true
+      home: "/home/{{ item.key }}"
+      state: present
+
+  - name: "Allow {{ item.key }} group to have password protected sudo"
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      regexp: '^{{ item.key }}'
+      line: '{{ item.key }} ALL=(ALL:ALL) ALL'
+      validate: 'visudo -cf %s'
+
+  - name: Modificate permissions to home dir
+    file:
+      path: "/home/{{ item.key }}"
+      mode: '0751'
+  when: item.value.password is defined
+
+- name: With no password
+  block:
+  - name: "Create user {{ item.key }} with no password"
+    user:
+      name: "{{ item.key }}"
+      group: "{{ item.key }}"
+      shell: /bin/sh
+      system: false
+      create_home: true
+      home: "/home/{{ item.key }}"
+      state: present
+
+  - name: "Allow {{ item.key }} group to have passwordless sudo"
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      regexp: '^{{ item.key }}'
+      line: '{{ item.key }} ALL=(ALL) NOPASSWD: ALL'
+      validate: 'visudo -cf %s'
+
+  - name: Modificate permissions to home dir
+    file:
+      path: "/home/{{ item.key }}"
+      mode: '0751'
+  when: item.value.password is not defined

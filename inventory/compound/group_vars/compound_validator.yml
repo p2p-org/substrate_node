@@ -1,0 +1,14 @@
+---
+node_relaychain_args:
+- '--validator'
+- '--pruning=archive'
+- '--prometheus-external'
+- '--prometheus-port 9615'
+
+node_service_env: 
+- '"MINER=ETH:{eth_addr}"'
+- '"KEYRING_TYPE=IN_MEMORY"'
+- '"ETH_KEY={eth_key}"'
+- '"ETH_KEY_ID=my_eth_key_id"'
+- '"ETH_RPC_URL=https://goerli.infura.io/v3/1111111111111111"'
+- '"OPF_URL=https://prices.compound.finance/coinbase"'

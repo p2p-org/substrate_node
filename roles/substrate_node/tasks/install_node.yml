@@ -1,0 +1,27 @@
+---
+- name: Stopping node
+  systemd:
+    state: stopped
+    name: "{{ node_binary_name}}-node"
+  ignore_errors: yes
+  when: "'upgrade' in ansible_run_tags"
+
+
+- name: Make local copy of previous version
+  copy:
+    src: "{{ node_binary_dir }}/{{ node_binary_name }}"
+    dest: "{{ node_binary_dir }}/{{ node_binary_name }}_previous"
+    remote_src: yes
+  ignore_errors: yes
+  when: "'upgrade' in ansible_run_tags"
+
+- name: Download latest release
+  get_url:
+    force: yes
+    url: "{{ node_binary_url }}"
+    dest: "{{ node_binary_dir }}/{{ node_binary_name }}"
+    owner: root
+    group: root
+    mode: 0755
+  changed_when: true
+  notify: restart-node

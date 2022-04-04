@@ -1,0 +1,31 @@
+---
+- name: Get peerid
+  uri:
+    url: "http://localhost:{{ node_rpc_port }}/"
+    method: POST
+    body_format: json
+    return_content: yes
+    body: {"id":1, "jsonrpc":"2.0", "method": "system_localPeerId"}
+  register: peerid
+  run_once: yes
+  delegate_to: "{{ item }}"
+  become: no
+  until: peerid.status == 200
+  retries: 3
+  delay: 5
+
+- name: Set reserved nodes
+  uri:
+    url: "http://localhost:9933/"
+    method: POST
+    body_format: json
+    return_content: yes
+    body: {"id":1, "jsonrpc":"2.0", "method": "system_addReservedPeer","params": ["/ip4/{{ item }}/tcp/30333/p2p/{{ peerid.json['result'] }}"]}
+  register: result
+  until: result.status == 200
+  retries: 3
+  delay: 5
+
+- name: Result
+  debug:
+    msg: "/ip4/{{ item }}/tcp/30333/p2p/{{ peerid.json['result'] }}"
